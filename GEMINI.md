@@ -1,6 +1,9 @@
 # GEMINI.md
 
+> **Nota importante:** Este repositorio es un **empaquetado de extensión para Gemini CLI**. La arquitectura técnica, el código fuente (`src/`) y la lógica de servicios descrita a continuación residen en el repositorio original de [Jacob Ben-David](https://github.com/jacob-bd/notebooklm-mcp-cli). Este archivo se mantiene aquí como **referencia técnica profunda** para que el agente comprenda el funcionamiento del motor `notebooklm-mcp-cli` que el usuario debe instalar por separado.
+
 ## Project Overview
+... (resto del contenido original)
 
 **NotebookLM MCP Server & CLI**
 
