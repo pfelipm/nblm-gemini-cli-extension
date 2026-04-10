@@ -1,333 +1,755 @@
 ---
-name: notebooklm-expert
+name: nlm-skill
 version: "0.5.19"
-description: "Guía experta para la CLI de NotebookLM (`nlm`) y el servidor MCP. Usa esta habilidad para interactuar con NotebookLM programáticamente: crear/gestionar cuadernos, añadir fuentes (URLs, YouTube, texto, Google Drive), generar contenido (pódcast, informes, cuestionarios, flashcards, mapas mentales, diapositivas, infografías, vídeos, tablas de datos), realizar investigaciones, chatear con fuentes o automatizar flujos de trabajo. Se activa al mencionar \"nlm\", \"notebooklm\", \"generación de pódcast\", \"resumen de audio\" o cualquier tarea de automatización de NotebookLM."
+description: "Expert guide for the NotebookLM CLI (`nlm`) and MCP server - interfaces for Google NotebookLM. Use this skill when users want to interact with NotebookLM programmatically, including: creating/managing notebooks, adding sources (URLs, YouTube, text, Google Drive), generating content (podcasts, reports, quizzes, flashcards, mind maps, slides, infographics, videos, data tables), conducting research, chatting with sources, or automating NotebookLM workflows. Triggers on mentions of \"nlm\", \"notebooklm\", \"notebook lm\", \"podcast generation\", \"audio overview\", or any NotebookLM-related automation task."
 ---
 
-# Experto en NotebookLM (CLI y MCP)
+# NotebookLM CLI & MCP Expert
 
-Esta habilidad proporciona una guía completa para usar NotebookLM a través de la CLI `nlm` y las herramientas MCP.
+This skill provides comprehensive guidance for using NotebookLM via both the `nlm` CLI and MCP tools.
 
-## Detección de Herramientas (CRÍTICO - Leer primero)
+## Tool Detection (CRITICAL - Read First!)
 
-**SIEMPRE verifica qué herramientas están disponibles antes de proceder:**
+**ALWAYS check which tools are available before proceeding:**
 
-1. **Busca herramientas MCP**: Herramientas que comiencen con `mcp__notebooklm-mcp__*` o `mcp_notebooklm_*`.
-2. **Si AMBAS herramientas (MCP y CLI) están disponibles**: **PREGUNTA al usuario** cuál prefiere usar antes de continuar.
-3. **Si solo hay herramientas MCP disponibles**: Úsalas directamente (consulta los docstrings para los parámetros).
-4. **Si solo hay CLI disponible**: Usa comandos de la CLI `nlm` a través de Bash.
+1. **Check for MCP tools**: Look for tools starting with `mcp__notebooklm-mcp__*` or `mcp_notebooklm_*`
+2. **If BOTH MCP tools AND CLI are available**: **ASK the user** which they prefer to use before proceeding
+3. **If only MCP tools are available**: Use them directly (refer to tool docstrings for parameters)
+4. **If only CLI is available**: Use `nlm` CLI commands via Bash
 
-**Lógica de Decisión:**
+**Decision Logic:**
 ```
-has_mcp_tools = check_available_tools()  # Busca mcp__notebooklm-mcp__* o mcp_notebooklm_*
-has_cli = check_bash_available()  # Puede ejecutar comandos nlm
+has_mcp_tools = check_available_tools()  # Look for mcp__notebooklm-mcp__* or mcp_notebooklm_*
+has_cli = check_bash_available()  # Can run nlm commands
 
 if has_mcp_tools and has_cli:
-    # PREGUNTAR AL USUARIO: "Puedo usar las herramientas MCP o la CLI nlm. ¿Cuál prefieres?"
+    # ASK USER: "I can use either MCP tools or the nlm CLI. Which do you prefer?"
     user_preference = ask_user()
 else if has_mcp_tools:
-    # Usar herramientas MCP directamente
+    # Use MCP tools directly
     mcp__notebooklm-mcp__notebook_list()
 else:
-    # Usar CLI vía Bash
+    # Use CLI via Bash
     bash("nlm notebook list")
 ```
 
-Esta habilidad documenta AMBOS enfoques. Elige el adecuado según la disponibilidad de herramientas y la **preferencia del usuario**.
+This skill documents BOTH approaches. Choose the appropriate one based on tool availability and **user preference**.
 
-## Referencia Rápida
+## Quick Reference
 
-**Ejecuta `nlm --ai` para obtener documentación optimizada para IA** - proporciona una visión completa de todas las capacidades de la CLI.
+**Run `nlm --ai` to get comprehensive AI-optimized documentation** - this provides a complete view of all CLI capabilities.
 
 ```bash
-nlm --help              # Listar todos los comandos
-nlm <command> --help    # Ayuda para un comando específico
-nlm --ai                # Documentación completa optimizada para IA (RECOMENDADO)
-nlm --version           # Verificar versión instalada
+nlm --help              # List all commands
+nlm <command> --help    # Help for specific command
+nlm --ai                # Full AI-optimized documentation (RECOMMENDED)
+nlm --version           # Check installed version
 ```
 
-## Reglas Críticas (Leer primero)
+## Critical Rules (Read First!)
 
-1. **Autenticarse siempre primero**: Ejecuta `nlm login` antes de cualquier operación.
-2. **Las sesiones expiran en ~20 minutos**: Vuelve a ejecutar `nlm login` si los comandos empiezan a fallar.
-3. **⚠️ SIEMPRE PREGUNTA ANTES DE ELIMINAR**: Antes de ejecutar CUALQUIER comando de eliminación, pide confirmación explícita al usuario. Las eliminaciones son **irreversibles**. Muestra qué se eliminará y advierte sobre la pérdida permanente de datos.
-4. **`--confirm` es OBLIGATORIO**: Todos los comandos de generación y eliminación necesitan `--confirm` o `-y` (CLI) o `confirm=True` (MCP).
-5. **La investigación requiere `--notebook-id`**: El flag es obligatorio, no posicional.
-6. **Captura los IDs de la salida**: Los comandos de creación/inicio devuelven IDs necesarios para operaciones posteriores.
-7. **Usa alias**: Simplifica los UUIDs largos con `nlm alias set <nombre> <uuid>`.
-8. **Verifica alias antes de crear**: Ejecuta `nlm alias list` para evitar conflictos de nombres.
-9. **NO inicies el REPL**: Nunca uses `nlm chat start` - abre una terminal interactiva que las herramientas de IA no pueden controlar. Usa `nlm notebook query` para preguntas y respuestas directas.
-10. **Elige el formato de salida sabiamente**: La salida por defecto es compacta y eficiente en tokens. Usa `--quiet` para capturar IDs. Usa `--json` solo cuando necesites parsear campos específicos.
-11. **Usa `--help` si tienes dudas**: `nlm <command> --help` para ver opciones y flags.
+1. **Always authenticate first**: Run `nlm login` before any operations
+2. **Sessions expire in ~20 minutes**: Re-run `nlm login` if commands start failing
+3. **⚠️ ALWAYS ASK USER BEFORE DELETE**: Before executing ANY delete command, ask the user for explicit confirmation. Deletions are **irreversible**. Show what will be deleted and warn about permanent data loss.
+4. **`--confirm` is REQUIRED**: All generation and delete commands need `--confirm` or `-y` (CLI) or `confirm=True` (MCP)
+5. **Research requires `--notebook-id`**: The flag is mandatory, not positional
+6. **Capture IDs from output**: Create/start commands return IDs needed for subsequent operations
+7. **Use aliases**: Simplify long UUIDs with `nlm alias set <name> <uuid>`
+8. **Check aliases before creating**: Run `nlm alias list` before creating a new alias to avoid conflicts with existing names.
+9. **DO NOT launch REPL**: Never use `nlm chat start` - it opens an interactive REPL that AI tools cannot control. Use `nlm notebook query` for one-shot Q&A instead.
+10. **Choose output format wisely**: Default output (no flags) is compact and token-efficient—use it for status checks. Use `--quiet` para capturar IDs. Use `--json` solo cuando necesites parsear campos específicos.
+11. **Use `--help` when unsure**: Run `nlm <command> --help` to see available options and flags for any command.
 
-## Árbol de Decisión de Flujos de Trabajo
+## Workflow Decision Tree
 
-Usa esto para determinar la secuencia correcta de comandos:
+Use this to determine the right sequence of commands:
 
 ```
-El usuario quiere...
+User wants to...
 │
-├─► Trabajar con NotebookLM por primera vez
-│   └─► nlm login → nlm notebook create "Título"
+├─► Work with NotebookLM for the first time
+│   └─► nlm login → nlm notebook create "Title"
 │
-├─► Añadir contenido a un cuaderno
-│   ├─► Desde una URL/web → nlm source add <nb-id> --url "https://..."
-│   ├─► Desde YouTube → nlm source add <nb-id> --url "https://youtube.com/..."
-│   ├─► Desde texto pegado → nlm source add <nb-id> --text "contenido" --title "Título"
-│   ├─► Desde Google Drive → nlm source add <nb-id> --drive <doc-id> --type doc
-│   └─► Descubrir nuevas fuentes → nlm research start "consulta" --notebook-id <nb-id>
+├─► Add content to a notebook
+│   ├─► From a URL/webpage → nlm source add <nb-id> --url "https://..."
+│   ├─► From YouTube → nlm source add <nb-id> --url "https://youtube.com/..."
+│   ├─► From pasted text → nlm source add <nb-id> --text "content" --title "Title"
+│   ├─► From Google Drive → nlm source add <nb-id> --drive <doc-id> --type doc
+│   └─► Discover new sources → nlm research start "query" --notebook-id <nb-id>
 │
-├─► Generar contenido desde las fuentes
-│   ├─► Pódcast/Audio → nlm audio create <nb-id> --confirm
-│   ├─► Resumen escrito → nlm report create <nb-id> --confirm
-│   ├─► Materiales de estudio → nlm quiz/flashcards create <nb-id> --confirm
-│   ├─► Contenido visual → nlm mindmap/slides/infographic create <nb-id> --confirm
-│   ├─► Vídeo → nlm video create <nb-id> --confirm
-│   └─► Extraer datos → nlm data-table create <nb-id> "descripción" --confirm
+├─► Generate content from sources
+│   ├─► Podcast/Audio → nlm audio create <nb-id> --confirm
+│   ├─► Written summary → nlm report create <nb-id> --confirm
+│   ├─► Study materials → nlm quiz/flashcards create <nb-id> --confirm
+│   ├─► Visual content → nlm mindmap/slides/infographic create <nb-id> --confirm
+│   ├─► Video → nlm video create <nb-id> --confirm
+│   └─► Extract data → nlm data-table create <nb-id> "description" --confirm
 │
-├─► Hacer preguntas sobre las fuentes
-│   └─► nlm notebook query <nb-id> "pregunta"
-│       (Usa --conversation-id para seguimientos)
-│       ⚠️ NO uses `nlm chat start` - es solo para humanos
+├─► Ask questions about sources
+│   └─► nlm notebook query <nb-id> "question"
+│       (Use --conversation-id for follow-ups)
+│       ⚠️ Do NOT use `nlm chat start` - it's a REPL for humans only
 │
-├─► Verificar estado de generación
+├─► Check generation status
 │   └─► nlm studio status <nb-id>
 │
-└─► Gestionar/Limpiar
-    ├─► Listar cuadernos → nlm notebook list
-    ├─► Listar fuentes → nlm source list <nb-id>
-    ├─► Eliminar fuente → nlm source delete <source-id> --confirm
-    └─► Eliminar cuaderno → nlm notebook delete <nb-id> --confirm
+└─► Manage/cleanup
+    ├─► List notebooks → nlm notebook list
+    ├─► List sources → nlm source list <nb-id>
+    ├─► Delete source → nlm source delete <source-id> --confirm
+    └─► Delete notebook → nlm notebook delete <nb-id> --confirm
 ```
 
-## Categorías de Comandos
+## Command Categories
 
-### 1. Autenticación
+### 1. Authentication
 
-#### Autenticación MCP
+#### MCP Authentication
 
-Si usas herramientas MCP y encuentras errores de autenticación:
+If using MCP tools and encountering authentication errors:
 
 ```bash
-# Ejecuta la autenticación CLI (funciona para CLI y MCP)
+# Run the CLI authentication (works for both CLI and MCP)
 nlm login
 
-# Luego recarga los tokens en MCP
+# Then reload tokens in MCP
 mcp__notebooklm-mcp__refresh_auth()
 ```
 
-O guarda las cookies manualmente vía MCP (contingencia):
+Or manually save cookies via MCP (fallback):
 ```python
-# Extrae las cookies de Chrome DevTools y guarda
+# Extract cookies from Chrome DevTools and save
 mcp__notebooklm-mcp__save_auth_tokens(cookies="<cookie_header>")
 ```
 
-#### Autenticación CLI
+#### CLI Authentication
 
 ```bash
-nlm login                           # Lanza el navegador, extrae cookies (método principal)
-nlm login --check                   # Validar sesión actual
-nlm login --profile work            # Usar perfil con nombre para múltiples cuentas
-nlm login --provider openclaw --cdp-url http://127.0.0.1:18800  # Proveedor CDP externo
-nlm login switch <perfil>           # Cambiar el perfil por defecto
-nlm login profile list              # Listar todos los perfiles con emails
-nlm login profile delete <nombre>   # Eliminar un perfil
-nlm login profile rename <viejo> <nuevo> # Renombrar un perfil
+nlm login                           # Launch browser, extract cookies (primary method)
+nlm login --check                   # Validate current session
+nlm login --profile work            # Use named profile for multiple accounts
+nlm login --provider openclaw --cdp-url http://127.0.0.1:18800  # External CDP provider
+nlm login switch <profile>          # Switch the default profile
+nlm login profile list              # List all profiles with email addresses
+nlm login profile delete <name>     # Delete a profile
+nlm login profile rename <old> <new> # Rename a profile
 ```
 
-**Soporte Multi-Perfil**: Cada perfil tiene su propia sesión de navegador aislada.
+**Multi-Profile Support**: Each profile gets its own isolated browser session (supports Chrome, Arc, Brave, Edge, Chromium, and more), so you can be logged into multiple Google accounts simultaneously.
 
-**Vida de la sesión**: ~20 minutos. Re-autentícate cuando fallen los comandos.
+**Session lifetime**: ~20 minutes. Re-authenticate when commands fail with auth errors.
 
-### 2. Gestión de Cuadernos
+**Switching MCP Accounts**: The MCP server always uses the active default profile. If you need to switch which Google account the MCP server is communicating with, you MUST use the CLI: run `nlm login switch <name>`. Your next MCP tool call will instantly use the new account.
 
-#### Herramientas MCP
-Usa herramientas: `notebook_list`, `notebook_create`, `notebook_get`, `notebook_describe`, `notebook_query`, `notebook_rename`, `notebook_delete`. Todas aceptan `notebook_id`. Eliminar requiere `confirm=True`.
+**Note**: Both MCP and CLI share the same authentication backend, so authenticating with one works for both.
 
-#### Comandos CLI
+### 2. Notebook Management
+
+#### MCP Tools
+
+Use tools: `notebook_list`, `notebook_create`, `notebook_get`, `notebook_describe`, `notebook_query`, `notebook_rename`, `notebook_delete`. All accept `notebook_id` parameter. Delete requires `confirm=True`.
+
+#### CLI Commands
 ```bash
-nlm notebook list                      # Listar todos los cuadernos
-nlm notebook list --json               # Salida JSON
-nlm notebook list --quiet              # Solo IDs
-nlm notebook create "Título"           # Crear cuaderno, devuelve ID
-nlm notebook get <id>                  # Detalles del cuaderno
-nlm notebook describe <id>             # Resumen IA + temas sugeridos
-nlm notebook query <id> "pregunta"     # Q&A directo con fuentes
-nlm notebook rename <id> "Nuevo Título" # Renombrar cuaderno
-nlm notebook delete <id> --confirm     # Eliminación PERMANENTE
+nlm notebook list                      # List all notebooks
+nlm notebook list --json               # JSON output for parsing
+nlm notebook list --quiet              # IDs only (for scripting)
+nlm notebook create "Title"            # Create notebook, returns ID
+nlm notebook get <id>                  # Get notebook details
+nlm notebook describe <id>             # AI-generated summary + suggested topics
+nlm notebook query <id> "question"     # One-shot Q&A with sources
+nlm notebook rename <id> "New Title"   # Rename notebook
+nlm notebook delete <id> --confirm     # PERMANENT deletion
 ```
 
-### 3. Gestión de Fuentes
+### 3. Source Management
 
-#### Herramientas MCP
-Usa `source_add` con estos valores de `source_type`:
-- `url` - Web o YouTube (`url`)
-- `text` - Contenido pegado (`text` + `title`)
-- `file` - Subida de archivo local (`file_path`)
-- `drive` - Google Drive doc (`document_id` + `doc_type`)
+#### MCP Tools
 
-Otras: `source_list_drive`, `source_describe`, `source_get_content`, `source_rename`, `source_sync_drive` (requiere `confirm=True`), `source_delete` (requiere `confirm=True`).
+Use `source_add` with these `source_type` values:
+- `url` - Web page or YouTube URL (`url` param)
+- `text` - Pasted content (`text` + `title` params)
+- `file` - Local file upload (`file_path` param)
+- `drive` - Google Drive doc (`document_id` + `doc_type` params)
 
-#### Comandos CLI
+Other tools: `source_list_drive`, `source_describe`, `source_get_content`, `source_rename`, `source_sync_drive` (requires `confirm=True`), `source_delete` (requires `confirm=True`).
+
+#### CLI Commands
 ```bash
-# Añadir fuentes
-nlm source add <nb-id> --url "https://..."           # Página web
-nlm source add <nb-id> --url "https://youtube.com/..." # Vídeo de YouTube
-nlm source add <nb-id> --text "contenido" --title "X"  # Texto pegado
-nlm source add <nb-id> --drive <doc-id>              # Drive doc (auto-detectar tipo)
-nlm source add <nb-id> --drive <doc-id> --type slides # Tipo explícito
+# Adding sources
+nlm source add <nb-id> --url "https://..."           # Web page
+nlm source add <nb-id> --url "https://youtube.com/..." # YouTube video
+nlm source add <nb-id> --text "content" --title "X"  # Pasted text
+nlm source add <nb-id> --drive <doc-id>              # Drive doc (auto-detect type)
+nlm source add <nb-id> --drive <doc-id> --type slides # Explicit type
 
-# Listar y ver
-nlm source list <nb-id>                # Tabla de fuentes
-nlm source list <nb-id> --drive        # Fuentes de Drive con estado de frescura
-nlm source get <source-id>             # Metadatos de la fuente
-nlm source describe <source-id>        # Resumen IA + palabras clave
-nlm source content <source-id>         # Contenido de texto crudo
+# Listing and viewing
+nlm source list <nb-id>                # Table of sources
+nlm source list <nb-id> --drive        # Show Drive sources with freshness
+nlm source list <nb-id> --drive -S     # Skip freshness checks (faster)
+nlm source get <source-id>             # Source metadata
+nlm source describe <source-id>        # AI summary + keywords
+nlm source content <source-id>         # Raw text content
+nlm source content <source-id> -o file.txt  # Export to file
 
-# Sincronización de Drive
-nlm source stale <nb-id>               # Listar fuentes de Drive desactualizadas
-nlm source sync <nb-id> --confirm      # Sincronizar todas las desactualizadas
+# Drive sync (for stale sources)
+nlm source stale <nb-id>               # List outdated Drive sources
+nlm source sync <nb-id> --confirm      # Sync all stale sources
+nlm source sync <nb-id> --source-ids <ids> --confirm  # Sync specific
 
-# Deletción
+# Rename
+nlm source rename <source-id> "New Title" --notebook <nb-id>
+nlm rename source <source-id> "New Title" --notebook <nb-id>  # verb-first
+
+# Deletion
 nlm source delete <source-id> --confirm
 ```
 
-### 4. Investigación (Descubrimiento de Fuentes)
+**Drive types**: `doc`, `slides`, `sheets`, `pdf`
 
-#### Herramientas MCP
-Usa `research_start` con:
-- `source`: `web` o `drive`
-- `mode`: `fast` (~30s) o `deep` (~5min, solo web)
+### 4. Research (Source Discovery)
 
-Flujo: `research_start` → poll `research_status` → `research_import`.
+Research finds NEW sources from the web or Google Drive.
 
-#### Comandos CLI
+#### MCP Tools
+
+Use `research_start` with:
+- `source`: `web` or `drive`
+- `mode`: `fast` (~30s) or `deep` (~5min, web only)
+
+Workflow: `research_start` → poll `research_status` → `research_import`
+
+#### CLI Commands
 ```bash
-# Iniciar investigación (--notebook-id es OBLIGATORIO)
-nlm research start "consulta" --notebook-id <id>              # Web rápida (~30s)
-nlm research start "consulta" --notebook-id <id> --mode deep  # Web profunda (~5min)
-nlm research start "consulta" --notebook-id <id> --source drive  # Búsqueda en Drive
+# Start research (--notebook-id is REQUIRED)
+nlm research start "query" --notebook-id <id>              # Fast web (~30s)
+nlm research start "query" --notebook-id <id> --mode deep  # Deep web (~5min)
+nlm research start "query" --notebook-id <id> --source drive  # Drive search
 
-# Verificar progreso
-nlm research status <nb-id>                   # Poll hasta terminar
-nlm research import <nb-id> <task-id>         # Importar todos los hallazgos
+# Check progress
+nlm research status <nb-id>                   # Poll until done (5min max)
+nlm research status <nb-id> --max-wait 0      # Single check, no waiting
+nlm research status <nb-id> --task-id <tid>   # Check specific task
+nlm research status <nb-id> --full            # Full details
+
+# Import discovered sources
+nlm research import <nb-id> <task-id>            # Import all
+nlm research import <nb-id> <task-id> --indices 0,2,5  # Import specific
+nlm research import <nb-id> <task-id> --timeout 600    # Custom timeout (default: 300s)
 ```
 
-### 5. Generación de Contenido (Studio)
+**Modes**: `fast` (~30s, ~10 sources) | `deep` (~5min, ~40+ sources, web only)
 
-#### Herramientas MCP (Creación Unificada)
-Usa `studio_create` con `artifact_type`. Todos requieren `confirm=True`.
+### 5. Content Generation (Studio)
 
-| artifact_type | Opciones Clave |
+#### MCP Tools (Unified Creation)
+
+Use `studio_create` with `artifact_type` and type-specific options. All require `confirm=True`.
+
+| artifact_type | Key Options |
 |--------------|-------------|
 | `audio` | `audio_format`: deep_dive/brief/critique/debate, `audio_length`: short/default/long |
-| `video` | `video_format`: explainer/brief, `visual_style`: classic/whiteboard/anime... |
+| `video` | `video_format`: explainer/brief, `visual_style`: auto_select/classic/whiteboard/kawaii/anime/watercolor/retro_print/heritage/paper_craft |
 | `report` | `report_format`: Briefing Doc/Study Guide/Blog Post/Create Your Own, `custom_prompt` |
 | `quiz` | `question_count`, `difficulty`: easy/medium/hard |
+| `flashcards` | `difficulty`: easy/medium/hard |
 | `mind_map` | `title` |
-| `slide_deck` | `slide_format`: detailed_deck/presenter_slides |
-| `infographic` | `orientation`: landscape/portrait/square, `style`: professional/anime... |
-| `data_table` | `description` (OBLIGATORIO) |
+| `slide_deck` | `slide_format`: detailed_deck/presenter_slides, `slide_length`: short/default |
+| `infographic` | `orientation`: landscape/portrait/square, `detail_level`: concise/standard/detailed, `infographic_style`: auto_select/sketch_note/professional/bento_grid/editorial/instructional/bricks/clay/anime/kawaii/scientific |
+| `data_table` | `description` (REQUIRED) |
 
-#### Comandos CLI
+**Common options**: `source_ids`, `language` (BCP-47 code), `focus_prompt`
+
+**Revise Slides:** Use `studio_revise` to revise individual slides in an existing slide deck.
+- Requires `artifact_id` (from `studio_status`) and `slide_instructions`
+- Creates a NEW artifact — the original is not modified
+- Slide numbers are 1-based (slide 1 = first slide)
+- Poll `studio_status` after calling to check when the new deck is ready
+
+#### CLI Commands
+
+All generation commands share these flags:
+- `--confirm` or `-y`: **REQUIRED** to execute
+- `--source-ids <id1,id2>`: Limit to specific sources
+- `--language <code>`: BCP-47 code (en, es, fr, de, ja)
+
 ```bash
-# Audio (Pódcast)
+# Audio (Podcast)
 nlm audio create <id> --confirm
-nlm audio create <id> --format deep_dive --confirm
+nlm audio create <id> --format deep_dive --length default --confirm
+nlm audio create <id> --format brief --focus "key topic" --confirm
+# Formats: deep_dive, brief, critique, debate
+# Lengths: short, default, long
 
-# Informe (Report)
+# Report
 nlm report create <id> --confirm
 nlm report create <id> --format "Study Guide" --confirm
+nlm report create <id> --format "Create Your Own" --prompt "Custom..." --confirm
+# Formats: "Briefing Doc", "Study Guide", "Blog Post", "Create Your Own"
 
-# Cuestionario (Quiz)
+# Quiz
+nlm quiz create <id> --confirm
 nlm quiz create <id> --count 5 --difficulty 3 --confirm
+nlm quiz create <id> --count 10 --difficulty 3 --focus "Focus on key concepts" --confirm
+# Count: number of questions (default: 2)
+# Difficulty: 1-5 (1=easy, 5=hard)
+# Focus: optional text to guide quiz generation
 
-# Diapositivas (Slides)
+# Flashcards
+nlm flashcards create <id> --confirm
+nlm flashcards create <id> --difficulty hard --confirm
+nlm flashcards create <id> --difficulty medium --focus "Focus on definitions" --confirm
+# Difficulty: easy, medium, hard
+# Focus: optional text to guide flashcard generation
+
+# Mind Map
+nlm mindmap create <id> --confirm
+nlm mindmap create <id> --title "Topic Overview" --confirm
+nlm mindmap list <id>  # List existing mind maps
+
+# Slides
 nlm slides create <id> --confirm
-nlm slides revise <artifact-id> --slide '1 Haz el título más grande' --confirm
+nlm slides create <id> --format presenter --length short --confirm
+# Formats: detailed, presenter | Lengths: short, default
+nlm slides revise <artifact-id> --slide '1 Make the title larger' --confirm
+# Creates a NEW deck with revisions. Original unchanged.
+
+# Infographic
+nlm infographic create <id> --confirm
+nlm infographic create <id> --orientation portrait --detail detailed --style professional --confirm
+# Orientations: landscape, portrait, square
+# Detail: concise, standard, detailed
+# Styles: auto_select, sketch_note, professional, bento_grid, editorial, instructional, bricks, clay, anime, kawaii, scientific
+
+# Video
+nlm video create <id> --confirm
+nlm video create <id> --format brief --style whiteboard --confirm
+# Formats: explainer, brief
+# Styles: auto_select, classic, whiteboard, kawaii, anime, watercolor, retro_print, heritage, paper_craft
+
+# Data Table
+nlm data-table create <id> "Extract all dates and events" --confirm
+# DESCRIPTION is required as second argument
 ```
 
-### 6. Gestión de Artefactos (Studio)
+### 6. Studio (Artifact Management)
 
-#### Herramientas MCP
-Usa `studio_status` para progreso. `download_artifact` para obtener el archivo. `export_artifact` para Google Docs/Sheets. `studio_delete` (requiere `confirm=True`).
+#### MCP Tools
 
-#### Comandos CLI
+Use `studio_status` to check progress (or rename with `action="rename"`). Use `download_artifact` with `artifact_type` and `output_path`. Use `export_artifact` with `export_type`: docs/sheets. Delete with `studio_delete` (requires `confirm=True`).
+
+#### CLI Commands
 ```bash
-# Verificar estado
-nlm studio status <nb-id>                          # Listar todos los artefactos
+# Check status
+nlm studio status <nb-id>                          # List all artifacts
+nlm studio status <nb-id> --full                   # Show full details (including custom prompts)
+nlm studio status <nb-id> --json                   # JSON output
 
-# Descargar artefactos
+# Download artifacts
 nlm download audio <nb-id> --output podcast.mp3
 nlm download video <nb-id> --output video.mp4
 nlm download report <nb-id> --output report.md
-nlm download slide-deck <nb-id> --output slides.pdf
+nlm download slide-deck <nb-id> --output slides.pdf           # PDF (default)
+nlm download slide-deck <nb-id> --output slides.pptx --format pptx  # PPTX
+nlm download quiz <nb-id> --output quiz.json --format json
+
+# Export to Google Docs/Sheets
+nlm export sheets <nb-id> <artifact-id> --title "My Data Table"
+nlm export docs <nb-id> <artifact-id> --title "My Report"
+
+# Delete artifact
+nlm studio delete <nb-id> <artifact-id> --confirm
 ```
 
-### 7. Configuración de Chat y Notas
+**Status values**: `completed` (✓), `in_progress` (●), `failed` (✗)
 
-#### Herramientas MCP
-`chat_configure` con `goal`. `note` con `action`: create/list/update/delete.
+**Prompt Extraction**: The `studio_status` tool returns a `custom_instructions` field for each artifact. This contains the original focus prompt or custom instructions used to generate that artifact (e.g., the prompt for a "Create Your Own" report, or the focus topic for an Audio Overview). This is useful for retrieving the exact prompt that generated a successful artifact.
 
-#### Comandos CLI
+### Renaming Resources
+
+#### Rename a Source
+
+**MCP Tool:** `source_rename(notebook_id, source_id, new_title)`
+
+**CLI:**
 ```bash
-# Configurar comportamiento del chat
-nlm chat configure <id> --goal learning_guide
-nlm chat configure <id> --response-length longer
-
-# Gestión de notas
-nlm note create <nb-id> "Contenido" --title "Título"
-nlm note list <nb-id>
+nlm source rename <source-id> "New Title" --notebook <notebook-id>
+nlm rename source <source-id> "New Title" --notebook <notebook-id>  # verb-first
 ```
 
-### 12. Operaciones por Lote (Batch)
+#### Rename a Studio Artifact
 
-#### Herramientas MCP
-Usa `batch` con `action`. Selecciona cuadernos por `notebook_names`, `tags` o `all=True`.
+#### MCP Tools
+
+Use `studio_status` with `action="rename"`, `artifact_id`, and `new_title`.
+
+#### CLI Commands
+```bash
+nlm studio rename <artifact-id> "New Title"
+nlm rename studio <artifact-id> "New Title"  # verb-first alternative
+```
+
+### Server Info (Version Check)
+
+#### MCP Tools
+
+Use `server_info` to get version and check for updates:
 
 ```python
-batch(action="query", query="¿Cuáles son los hallazgos?", notebook_names="Investigación IA")
+mcp__notebooklm-mcp__server_info()
+# Returns: version, latest_version, update_available, update_command
+```
+
+#### CLI Commands
+```bash
+nlm --version  # Shows version and update availability
+```
+
+### 7. Chat Configuration and Notes
+
+#### MCP Tools
+
+Use `chat_configure` with `goal`: default/learning_guide/custom. Use `note` with `action`: create/list/update/delete. Delete requires `confirm=True`.
+
+#### CLI Commands
+
+> ⚠️ **AI TOOLS: DO NOT USE `nlm chat start`** - It launches an interactive REPL that cannot be controlled programmatically. Use `nlm notebook query` for one-shot Q&A instead.
+
+For human users at a terminal:
+
+```bash
+nlm chat start <nb-id>  # Launch interactive REPL
+```
+
+**REPL Commands**:
+- `/sources` - List available sources
+- `/clear` - Reset conversation context
+- `/help` - Show commands
+- `/exit` - Exit REPL
+
+**Configure chat behavior** (works for both REPL and query):
+```bash
+nlm chat configure <id> --goal default
+nlm chat configure <id> --goal learning_guide
+nlm chat configure <id> --goal custom --prompt "Act as a tutor..."
+nlm chat configure <id> --response-length longer  # longer, default, shorter
+```
+
+**Notes management**:
+```bash
+nlm note create <nb-id> "Content" --title "Title"
+nlm note list <nb-id>
+nlm note update <nb-id> <note-id> --content "New content"
+nlm note delete <nb-id> <note-id> --confirm
+```
+
+### 8. Notebook Sharing
+
+#### MCP Tools
+
+Use `notebook_share_status` to check, `notebook_share_public` to enable/disable public link, `notebook_share_invite` with `email` and `role`: viewer/editor.
+
+#### CLI Commands
+```bash
+# Check sharing status
+nlm share status <nb-id>
+
+# Enable/disable public link
+nlm share public <nb-id>          # Enable
+nlm share public <nb-id> --off    # Disable
+
+# Invite collaborator
+nlm share invite <nb-id> user@example.com
+nlm share invite <nb-id> user@example.com --role editor
+```
+
+### 9. Aliases (UUID Shortcuts)
+
+Simplify long UUIDs:
+
+```bash
+nlm alias set myproject abc123-def456...  # Create alias (auto-detects type)
+nlm alias get myproject                    # Resolve to UUID
+nlm alias list                             # List all aliases
+nlm alias delete myproject                 # Remove alias
+
+# Use aliases anywhere
+nlm notebook get myproject
+nlm source list myproject
+nlm audio create myproject --confirm
+```
+
+### 10. Configuration
+
+CLI-only commands for managing settings:
+
+```bash
+nlm config show                              # Show current config
+nlm config get <key>                         # Get specific setting
+nlm config set <key> <value>                 # Update setting
+nlm config set output.format json            # Change default output
+
+# For switching profiles, prefer the simpler command:
+nlm login switch work                        # Switch default profile
+```
+
+**Available Settings:**
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `output.format` | `table` | Default output format (table, json) |
+| `output.color` | `true` | Enable colored output |
+| `output.short_ids` | `true` | Show shortened IDs |
+| `auth.browser` | `auto` | Preferred browser for login (auto, chrome, arc, brave, edge, chromium, vivaldi, opera) |
+| `auth.default_profile` | `default` | Profile to use when `--profile` not specified |
+
+### 11. Skill Management
+
+Manage the NotebookLM skill installation for various AI assistants:
+
+```bash
+nlm skill list                              # Show installation status
+nlm skill update                            # Update all outdated skills
+nlm skill update <tool>                     # Update specific skill (e.g., claude-code)
+nlm skill install <tool>                    # Install skill
+nlm skill uninstall <tool>                  # Uninstall skill
+```
+
+**Verb-first aliases**: `nlm update skill`, `nlm list skills`, `nlm install skill`
+
+## Output Formats
+
+Most list commands support multiple formats:
+
+| Flag | Description |
+|------|-------------|
+| (none) | Rich table (human-readable) |
+| `--json` | JSON output (for parsing) |
+| `--quiet` | IDs only (for piping) |
+| `--title` | "ID: Title" format |
+| `--url` | "ID: URL" format (sources only) |
+| `--full` | All columns/details |
+
+### 12. Batch Operations
+
+Perform the same action across multiple notebooks at once.
+
+#### MCP Tools
+
+Use `batch` with `action` parameter. Select notebooks by `notebook_names`, `tags`, or `all=True`.
+
+```python
+batch(action="query", query="What are the key findings?", notebook_names="AI Research, Dev Tools")
+batch(action="add_source", source_url="https://example.com", tags="ai,research")
+batch(action="create", titles="Project A, Project B, Project C")
+batch(action="delete", notebook_names="Old Project", confirm=True)
 batch(action="studio", artifact_type="audio", tags="research", confirm=True)
 ```
 
-#### Comandos CLI
+#### CLI Commands
 ```bash
-nlm batch query "Resumen" --tags "ai,research"
-nlm batch studio --type audio --tags "research" --confirm
+nlm batch query "What are the key takeaways?" --notebooks "id1,id2"
+nlm batch query "Summarize" --tags "ai,research"      # Query by tag
+nlm batch query "Summarize" --all                      # Query ALL notebooks
+nlm batch add-source --url "https://..." --notebooks "id1,id2"
+nlm batch create "Project A, Project B, Project C"     # Create multiple
+nlm batch delete --notebooks "id1,id2" --confirm       # Delete multiple
+nlm batch studio --type audio --tags "research" --confirm  # Generate across notebooks
 ```
 
-### 13. Consulta entre Cuadernos (Cross-Notebook)
+### 13. Cross-Notebook Query
 
-#### Herramientas MCP
+Query multiple notebooks and get **aggregated answers with per-notebook citations**.
+
+#### MCP Tools
+
 ```python
-cross_notebook_query(query="Compara enfoques", tags="ai,research")
+cross_notebook_query(query="Compare approaches", notebook_names="Notebook A, Notebook B")
+cross_notebook_query(query="Summarize", tags="ai,research")
+cross_notebook_query(query="Everything", all=True)
 ```
 
-#### Comandos CLI
+#### CLI Commands
 ```bash
-nlm cross query "Compara enfoques" --tags "ai,research"
+nlm cross query "What features are discussed?" --notebooks "id1,id2"
+nlm cross query "Compare approaches" --tags "ai,research"
+nlm cross query "Summarize everything" --all
 ```
 
-## Patrones Comunes
+### 14. Pipelines
 
-### Patrón 1: Investigación → Pódcast
+Define and execute multi-step notebook workflows. Three built-in pipelines plus support for custom YAML pipelines.
+
+#### MCP Tools
+
+```python
+pipeline(action="list")  # List available pipelines
+pipeline(action="run", notebook_id="...", pipeline_name="ingest-and-podcast", input_url="https://...")
+```
+
+#### CLI Commands
 ```bash
-nlm notebook create "IA 2026"
-nlm alias set ai <id>
-nlm research start "tendencias IA" --notebook-id ai --mode deep
-# Esperar...
-nlm research import ai <task-id>
+nlm pipeline list                                         # List available pipelines
+nlm pipeline run <notebook> ingest-and-podcast --url "https://..."
+nlm pipeline run <notebook> research-and-report --url "https://..."
+nlm pipeline run <notebook> multi-format                  # Audio + report + flashcards
+```
+
+**Built-in pipelines:** `ingest-and-podcast`, `research-and-report`, `multi-format`
+
+Create custom pipelines: add YAML files to `~/.notebooklm-mcp-cli/pipelines/`
+
+### 15. Tags & Smart Select
+
+Tag notebooks for organization and use tags to target batch operations.
+
+#### MCP Tools
+
+```python
+tag(action="add", notebook_id="...", tags="ai,research,llm")
+tag(action="remove", notebook_id="...", tags="ai")
+tag(action="list")                           # List all tagged notebooks
+tag(action="select", query="ai research")    # Find notebooks by tag match
+```
+
+#### CLI Commands
+```bash
+nlm tag add <notebook> --tags "ai,research,llm"           # Add tags
+nlm tag add <notebook> --tags "ai" --title "My Notebook"  # With display title
+nlm tag remove <notebook> --tags "ai"                     # Remove tags
+nlm tag list                                              # List all tagged notebooks
+nlm tag select "ai research"                              # Find notebooks by tag match
+```
+
+## Common Patterns
+
+### Pattern 1: Research → Podcast Pipeline
+
+```bash
+nlm notebook create "AI Research 2026"   # Capture ID
+nlm alias set ai <notebook-id>
+nlm research start "agentic AI trends" --notebook-id ai --mode deep
+nlm research status ai --max-wait 300    # Wait up to 5 min
+nlm research import ai <task-id>         # Import all sources
 nlm audio create ai --format deep_dive --confirm
-nlm studio status ai
+nlm studio status ai                     # Check generation progress
 ```
 
-## Solución de Errores
+### Pattern 2: Quick Content Ingestion
 
-| Error | Causa | Solución |
+```bash
+nlm source add <id> --url "https://example1.com"
+nlm source add <id> --url "https://example2.com"
+nlm source add <id> --text "My notes..." --title "Notes"
+nlm source list <id>
+```
+
+### Pattern 3: Study Materials Generation
+
+```bash
+nlm report create <id> --format "Study Guide" --confirm
+nlm quiz create <id> --count 10 --difficulty 3 --confirm
+nlm quiz create <id> --count 10 --difficulty 3 --focus "Focus on key concepts" --confirm
+# Count: number of questions (default: 2)
+# Difficulty: 1-5 (1=easy, 5=hard)
+# Focus: optional text to guide quiz generation
+
+# Flashcards
+nlm flashcards create <id> --confirm
+nlm flashcards create <id> --difficulty hard --confirm
+nlm flashcards create <id> --difficulty medium --focus "Focus on definitions" --confirm
+# Difficulty: easy, medium, hard
+# Focus: optional text to guide flashcard generation
+
+# Mind Map
+nlm mindmap create <id> --confirm
+nlm mindmap create <id> --title "Topic Overview" --confirm
+nlm mindmap list <id>  # List existing mind maps
+
+# Slides
+nlm slides create <id> --confirm
+nlm slides create <id> --format presenter --length short --confirm
+# Formats: detailed, presenter | Lengths: short, default
+nlm slides revise <artifact-id> --slide '1 Make the title larger' --confirm
+# Creates a NEW deck with revisions. Original unchanged.
+
+# Infographic
+nlm infographic create <id> --confirm
+nlm infographic create <id> --orientation portrait --detail detailed --style professional --confirm
+# Orientations: landscape, portrait, square
+# Detail: concise, standard, detailed
+# Styles: auto_select, sketch_note, professional, bento_grid, editorial, instructional, bricks, clay, anime, kawaii, scientific
+
+# Video
+nlm video create <id> --confirm
+nlm video create <id> --format brief --style whiteboard --confirm
+# Formats: explainer, brief
+# Styles: auto_select, classic, whiteboard, kawaii, anime, watercolor, retro_print, heritage, paper_craft
+
+# Data Table
+nlm data-table create <id> "Extract all dates and events" --confirm
+# DESCRIPTION is required as second argument
+```
+
+### Pattern 4: Drive Document Workflow
+
+```bash
+nlm source add <id> --drive 1KQH3eW0hMBp7WK... --type slides
+# ... time passes, document is edited ...
+nlm source stale <id>                    # Check freshness
+nlm source sync <id> --confirm           # Sync if stale
+```
+
+### Pattern 5: Batch & Cross-Notebook Workflow
+
+```bash
+# Tag notebooks for organization
+nlm tag add <id1> --tags "ai,research"
+nlm tag add <id2> --tags "ai,product"
+
+# Query across tagged notebooks
+nlm cross query "What are the main conclusions?" --tags "ai"
+
+# Batch generate podcasts for all tagged notebooks
+nlm batch studio --type audio --tags "ai" --confirm
+
+# Run a pipeline on a single notebook
+nlm pipeline run <id> ingest-and-podcast --url "https://example.com"
+```
+
+## Error Recovery
+
+| Error | Cause | Solution |
 |-------|-------|----------|
-| "Cookies have expired" | Sesión expirada | `nlm login` |
-| "Notebook not found" | ID inválido | `nlm notebook list` |
-| "Rate limit exceeded" | Demasiadas peticiones | Espera 30s y reintenta |
+| "Cookies have expired" | Session timeout | `nlm login` |
+| "authentication may have expired" | Session timeout | `nlm login` |
+| "Notebook not found" | Invalid ID | `nlm notebook list` |
+| "Source not found" | Invalid ID | `nlm source list <nb-id>` |
+| "Rate limit exceeded" | Too many calls | Wait 30s, retry |
+| "Research already in progress" | Pending research | Use `--force` or import first |
+| "Import timed out" | Too many sources | Use `--timeout 600` for larger notebooks |
+| "Google API error code 3" | Transient deep research error | Retry in a few minutes, or use `--mode fast` |
+| Browser doesn't launch | Port conflict | Close browser, retry |
+
+## Rate Limiting
+
+Wait between operations to avoid rate limits:
+- Source operations: 2 seconds
+- Content generation: 5 seconds
+- Research operations: 2 seconds
+- Query operations: 2 seconds
+
+## Advanced Reference
+
+For detailed information, see:
+- **[references/command_reference.md](references/command_reference.md)**: Complete command signatures
+- **[references/troubleshooting.md](references/troubleshooting.md)**: Detailed error handling
+- **[references/workflows.md](references/workflows.md)**: End-to-end task sequences
 
 ---
-**Nota final**: Siempre cita fuentes y entrega enlaces de descarga claros. Respeta la privacidad del usuario y no realices eliminaciones sin confirmación.
+
+## **🔑 Gemini CLI - Authentication & Errors (Troubleshooting)**
+
+* **Login Required**: If you receive an "Unauthorized" or "Cookies expired" error, inform the user to run `nlm login` in their terminal to sync Google credentials.
+* **Token Refresh**: Suggest running `nlm login --check` if the session appears to have expired.
+* **Proactive Support**: If a command fails due to auth, clearly explain the fix: "Your NotebookLM session has expired. Please run `nlm login` to re-authenticate."
