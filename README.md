@@ -2,24 +2,25 @@
 
 **Nota:** *Esta es una extensión de la comunidad. No es una extensión oficial de Google ni del equipo de NotebookLM.*
 
-Esta extensión para **Gemini CLI** actúa como una capa de inteligencia (Expert Skill) sobre el motor de **NotebookLM MCP**. Te permite gestionar tus cuadernos, realizar investigaciones profundas y generar contenido multimedia (pódcast, vídeos, guías) con un asistente que comprende los flujos de trabajo específicos de la plataforma.
+Esta extensión para **Gemini CLI** es un **empaquetado (wrapper)** nativo para el excelente motor de **NotebookLM MCP** desarrollado por [Jacob Ben-David](https://github.com/jacob-bd/notebooklm-mcp-cli).
 
 ---
 
-## 🧐 ¿Por qué usar esta extensión?
+## 🧐 ¿Por qué existe esta extensión?
 
-El proyecto original de **Jacob Ben-David** ya incluye un comando (`nlm setup add gemini`) que conecta el servidor MCP con Gemini CLI. Sin embargo, esta extensión aporta tres pilares fundamentales que no se obtienen con la configuración básica:
+Este proyecto ha sido construido principalmente como un **ejercicio de aprendizaje** por [pfelipm](https://github.com/pfelipm) para familiarizarse con la estructura, las habilidades (Skills) y la integración de servidores MCP dentro del ecosistema de **Gemini CLI**.
 
-1.  **Expert Skill (Habilidad Especializada):** Incluye un archivo `SKILL.md` que instruye al modelo de lenguaje sobre *cómo* razonar con las herramientas de NotebookLM. El asistente sabrá que para darte un enlace de pódcast debe primero verificar el estado de generación y luego usar la herramienta de descarga, en lugar de simplemente fallar.
-2.  **Contexto Enriquecido:** Proporciona un archivo de contexto que resume todas las capacidades del sistema, permitiendo que Gemini entienda mejor qué puede y qué no puede hacer sin tener que adivinar.
-3.  **Configuración Predefinida:** Configura automáticamente variables de entorno críticas (como el idioma español `es`) para asegurar que la experiencia sea coherente desde el primer minuto.
+Aunque el proyecto original de Jacob ya permite la conexión con Gemini CLI mediante comandos manuales, esta extensión ofrece una experiencia **"Plug-and-Play"**:
+1.  **Instalación Simplificada:** Configura el servidor MCP, carga la habilidad experta (Skill) y el contexto (`GEMINI.md`) en un solo paso con `gemini extension install`.
+2.  **Configuración Predefinida:** Activa automáticamente el soporte para el idioma español (`es`) para mejorar la generación de contenidos y la interacción.
+3.  **Habilidad Nativa:** Utiliza la guía experta original de Jacob (en inglés para máxima precisión técnica) para que Gemini actúe como un experto avanzado en la plataforma.
 
 ---
 
 ## 🛠️ Instalación (Paso a paso)
 
 ### 1. Instalar el motor (NotebookLM MCP)
-Abre tu terminal y instala el paquete de Python (se recomienda usar `uv`):
+Esta extensión depende del paquete de Python original. Instálalo globalmente (se recomienda `uv`):
 
 ```bash
 # Recomendado:
@@ -38,20 +39,20 @@ gemini extension install https://github.com/pfelipm/nblm-gemini-cli-extension
 
 ---
 
-## 🔑 Autenticación (¡Muy importante!)
+## 🔑 Autenticación (Paso Obligatorio)
 
-Para que la extensión funcione, debes sincronizar tus credenciales de Google una sola vez ejecutando:
+NotebookLM requiere tus credenciales de Google. Para sincronizarlas la primera vez, ejecuta en tu terminal:
 
 ```bash
 nlm login
 ```
-Esto abrirá tu navegador para realizar el login. Una vez hecho, tus cookies se guardarán de forma segura y Gemini podrá realizar las operaciones en tu nombre.
+Sigue los pasos en el navegador para iniciar sesión. Una vez hecho, Gemini podrá realizar las operaciones en tu nombre.
 
 ---
 
 ## 🎯 Ejemplos de uso
 
-*   "Investiga sobre la fusión nuclear y crea un nuevo cuaderno con lo que encuentres."
+*   "Crea un cuaderno llamado 'Investigación IA' y añade este PDF."
 *   "Genera un pódcast de tipo 'Deep Dive' basado en mis fuentes."
 *   "¿Cuáles son los puntos clave de este cuaderno? Cita las fuentes."
 *   "Crea una guía de estudio (report) y dame el enlace de descarga."
@@ -60,10 +61,10 @@ Esto abrirá tu navegador para realizar el login. Una vez hecho, tus cookies se 
 
 ## ⚖️ Créditos y Licencia
 
-Este proyecto es una adaptación para **Gemini CLI** basada en el motor de **Jacob Ben-David** ([notebooklm-mcp-cli](https://github.com/jacob-bd/notebooklm-mcp-cli)).
+Este proyecto es una adaptación educativa basada íntegramente en el motor y la documentación técnica de **Jacob Ben-David** ([notebooklm-mcp-cli](https://github.com/jacob-bd/notebooklm-mcp-cli)).
 
-*   **Motor original:** Jacob Ben-David.
-*   **Adaptación de la Extensión:** [pfelipm](https://github.com/pfelipm).
+*   **Motor, Skills y Contexto original:** Jacob Ben-David.
+*   **Empaquetado y Adaptación Gemini CLI:** [pfelipm](https://github.com/pfelipm).
 *   **Licencia:** [MIT](LICENSE).
 
-Esta extensión respeta íntegramente la licencia original y actúa como un puente de inteligencia para mejorar la experiencia de usuario en Gemini CLI.
+Esta extensión respeta íntegramente la licencia original y actúa como una capa de conveniencia para la comunidad de Gemini CLI.
