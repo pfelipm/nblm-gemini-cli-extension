@@ -1,0 +1,31 @@
+{
+  "name": "notebooklm",
+  "version": "0.5.19",
+  "description": "Acceso programático a Google NotebookLM para investigación, pódcast y generación de contenido con IA.",
+  "author": "Jacob Ben-David (Adaptado para Gemini CLI)",
+  "license": "MIT",
+  "contextFileName": "GEMINI.md",
+  "mcpServers": {
+    "notebooklm": {
+      "command": "notebooklm-mcp",
+      "args": [],
+      "env": {
+        "NOTEBOOKLM_HL": "es"
+      }
+    }
+  },
+  "settings": [
+    {
+      "name": "Perfil de Usuario",
+      "description": "Nombre del perfil de autenticación de NotebookLM (por defecto: default).",
+      "envVar": "NOTEBOOKLM_PROFILE",
+      "default": "default"
+    },
+    {
+      "name": "Idioma de Interfaz",
+      "description": "Idioma para las consultas y el contenido generado (es, en, etc.).",
+      "envVar": "NOTEBOOKLM_HL",
+      "default": "es"
+    }
+  ]
+}

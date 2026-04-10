@@ -1,0 +1,15 @@
+{
+  "name": "gemini-extension-notebooklm",
+  "version": "0.5.19",
+  "description": "Extensión nativa de Gemini CLI para interactuar con Google NotebookLM.",
+  "main": "index.js",
+  "keywords": [
+    "gemini-cli",
+    "extension",
+    "notebooklm",
+    "mcp"
+  ],
+  "author": "Jacob Ben-David",
+  "license": "MIT",
+  "dependencies": {}
+}
